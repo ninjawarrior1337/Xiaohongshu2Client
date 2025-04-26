@@ -1,17 +1,36 @@
-import { Injectable } from '@angular/core';
-import { LoginRequest } from './login-request';
-import { LoginResponse } from './login-response';
-import { Observable } from 'rxjs';
-import { HttpClient } from '@angular/common/http';
+import { computed, Injectable, signal } from "@angular/core";
+import { LoginRequest } from "./login-request";
+import { LoginResponse } from "./login-response";
+import { BehaviorSubject, filter, Observable, tap } from "rxjs";
+import { HttpClient } from "@angular/common/http";
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: "root",
 })
 export class AuthService {
+  constructor(private http: HttpClient) {}
 
-  constructor(private http: HttpClient) { }
+  private _authStatusSignal = signal(false);
+  authStatusSignal = computed(() => this._authStatusSignal());
+
+  private _authStatus = new BehaviorSubject(false);
+  authStatus = this._authStatus.asObservable();
+
+  private setAuthStatus(v: boolean) {
+    this._authStatusSignal.set(v)
+    this._authStatus.next(v)
+  }
 
   login(loginReq: LoginRequest): Observable<LoginResponse> {
-    return this.http.get<LoginResponse>("/api/Admin/Login")
+    return this.http.post<LoginResponse>("/api/Admin/Login", loginReq).pipe(
+      tap((o) => {
+        if(!o.success) return;
+
+        localStorage.setItem("token_xhs", o.token);
+        this.setAuthStatus(true)
+      })
+    );
   }
+
+  logout() {}
 }
