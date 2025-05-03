@@ -4,6 +4,8 @@ import { LoginResponse } from "./login-response";
 import { BehaviorSubject, filter, Observable, tap } from "rxjs";
 import { HttpClient } from "@angular/common/http";
 
+const TOKEN_KEY = "token_xhs"
+
 @Injectable({
   providedIn: "root",
 })
@@ -26,11 +28,19 @@ export class AuthService {
       tap((o) => {
         if(!o.success) return;
 
-        localStorage.setItem("token_xhs", o.token);
+        localStorage.setItem(TOKEN_KEY, o.token);
         this.setAuthStatus(true)
       })
     );
   }
 
-  logout() {}
+  isAuthenticated(): boolean {
+    const token = localStorage.getItem(TOKEN_KEY)
+    return token !== null
+  }
+
+  logout() {
+    localStorage.removeItem(TOKEN_KEY)
+    this.setAuthStatus(false)
+  }
 }
